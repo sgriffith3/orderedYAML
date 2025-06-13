@@ -10,43 +10,61 @@ A small Python package to recursively convert Python dicts/lists into `ruamel.ya
 ## Installation
 
 ```bash
-pip install yaml-order
+pip install orderedYAML
 ```
 
 ---
 ## Usage
 ```python
-from orderedYAML import OrderedYAML
+from core import OrderedYAML
 
 data = {
-    'metadata': {
-        'labels': {'env': 'prod', 'app': 'my-app'},
-        'name': 'my-resource',
-    },
-    'apiVersion': 'v1',
-    'kind': 'Service',
-    'spec': {
-        'ports': [{'port': 80}],
-        'selector': {'app': 'my-app'},
-        'type': 'ClusterIP',
-    },
+    "outerlist": {
+        "outeritems": [
+            {
+                "id": 1,
+                "name": "inner-1",
+                "inneritems": [
+                    {"z": 3, "a": 1, "m": 2},
+                    {"a": 4, "z": 5, "m": 6},
+                ]
+            },
+            {
+                "id": 2,
+                "inneritems": [
+                    {"m": 9, "z": 8, "a": 7}
+                ],
+                "name": "inner-2"
+            }
+        ]
+    }
 }
 
 ordering = {
-    (): ['apiVersion', 'kind', 'metadata', 'spec'],
-    ('metadata',): ['name', 'labels'],
-    ('spec',): ['selector', 'ports', 'type'],
+    "outerlist.outeritems[*]": ["name", "id", "inneritems"],
+    "outerlist.outeritems[].inneritems[*]": ["z", "m", "a", "q"]
 }
+oy = OrderedYAML(data, path_ordering=ordering)
+print(oy.dumps())
+```
 
-yaml_obj = OrderedYAML(data, ordering)
-
-# To stdout
-yaml_obj.dump()
-
-# Or to a file
-with open("out.yaml", "w") as f:
-    yaml_obj.dump(f)
-
-# Or get as a string
-yaml_string = yaml_obj.dumps()
+Resulting in 
+```json
+outerlist:
+  outeritems:
+  - name: inner-1
+    id: 1
+    inneritems:
+    - z: 3
+      m: 2
+      a: 1
+    - z: 5
+      m: 6
+      a: 4
+  - name: inner-2
+    id: 2
+    inneritems:
+    - z: 8
+      m: 9
+      a: 7
 ```
